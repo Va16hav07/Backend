@@ -14,3 +14,9 @@ npm install express
 then enter
 
 and then make a new file server.js and put that code that i have given as serevr.js
+
+
+after you have copied that code type 
+node server.js
+in new terminal
+
