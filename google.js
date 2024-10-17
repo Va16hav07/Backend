@@ -1,4 +1,3 @@
-//npm install express body-parser mongoose
 
 
 const express = require('express');
@@ -15,16 +14,15 @@ mongoose.connect('mongodb+srv://vaibhavkota7605:Rs52xX2cnZPwuH9z@cluster0.mug6b.
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
 
-// User schema
+// User schema 
 const userSchema = new mongoose.Schema({
     countryCode: String,
     firstName: String,
     lastName: String,
-    fullName: String,
-    emailAddress: {
+    email: { 
         type: String,
-        required: true, 
-        unique: true,   
+        required: true,
+        unique: true,
     },
     mobileNumber: String,
     userToken: String,
@@ -33,45 +31,29 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Registration endpoint
-app.post('/api/register', async (req, res) => {
-    const { countryCode, firstName, lastName, fullName, emailAddress, mobileNumber, userToken, deviceId } = req.body;
+// Check email endpoint
+app.post('/api/check-email', async (req, res) => {
+    const { email } = req.body;  
 
-    // Check if emailAddress is provided
-    if (!emailAddress) {
-        return res.status(400).json({ message: 'Email address is required' });
+    // Validate input
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
     }
 
     try {
-        // Log the incoming email
-        console.log("Attempting to register email:", emailAddress);
-
-        // Check if the email already exists 
-        const existingUser = await User.findOne({ emailAddress: { $regex: new RegExp(`^${emailAddress.trim()}$`, 'i') } });
-        if (existingUser) {
-            console.log("Existing user found:", existingUser);
-            return res.status(409).json({ message: 'Email address already exists' });
-        }
-
-        const newUser = new User({
-            countryCode,
-            firstName,
-            lastName,
-            fullName,
-            emailAddress,
-            mobileNumber,
-            userToken,
-            deviceId,
+        // Check if the email already exists
+        const existingUser = await User.findOne({
+            email: { $regex: new RegExp(`^${email.trim()}$`, 'i') }  
         });
 
-        await newUser.save();
-        res.status(201).json({ message: 'User registered successfully', user: newUser });
-    } catch (error) {
-        console.error('Error registering user:', error);
-        if (error.code === 11000) {
-            return res.status(409).json({ message: 'Email address already exists' });
+        if (existingUser) {
+            return res.status(409).json({ message: 'Email already exists' });
         }
-        res.status(500).json({ message: 'Error registering user', error: error.message });
+
+        res.status(200).json({ message: 'Email does not exist' });
+    } catch (error) {
+        console.error('Error checking email:', error);
+        res.status(500).json({ message: 'Error checking email', error: error.message });
     }
 });
 
