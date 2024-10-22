@@ -1,17 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-
-// Load environment variables from .env file
-dotenv.config();
-
 const app = express();
 
 // Middleware to parse incoming JSON data
 app.use(express.json());
 
 // MongoDB connection
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = 'mongodb+srv://vaibhavkota7605:Rs52xX2cnZPwuH9z@cluster0.mug6b.mongodb.net/sweatsmart?retryWrites=true&w=majority';
 
 mongoose.connect(mongoURI, {
     serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
@@ -25,7 +20,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    email: {
+    mobile: {
         type: String,
         required: true,
         unique: true
@@ -46,19 +41,19 @@ const User = mongoose.model('User', userSchema);
 
 // Login API
 app.post('/login', async (req, res) => {
-    const { email, password, token, deviceId } = req.body;
+    const { countryCode, mobile, password, token, deviceId } = req.body;
 
     // Input validation
-    if (!email || !password) {
-        return res.status(400).json({ message: "Please provide all required fields: email and password" });
+    if (!countryCode || !mobile || !password) {
+        return res.status(400).json({ message: "Please provide all required fields: countryCode, mobile, and password" });
     }
 
     try {
-        // Find user by email
-        const user = await User.findOne({ email });
+        // Find user by mobile number and country code
+        const user = await User.findOne({ mobile, countryCode });
 
         if (!user) {
-            return res.status(401).json({ message: "Email not found" });
+            return res.status(401).json({ message: "Mobile number or country code not found" });
         }
 
         // Validate password
@@ -70,10 +65,46 @@ app.post('/login', async (req, res) => {
         return res.json({
             message: "Login successful",
             user: {
-                email: user.email,
+                mobile: user.mobile,
                 countryCode: user.countryCode,
-                token: token || 'YourTokenHere',  
+                token: token || 'YourTokenHere',
                 deviceId: deviceId
+            }
+        });
+    } catch (error) {
+        console.error("Server error:", JSON.stringify(error, null, 2));
+        return res.status(500).json({
+            message: "Server error",
+            error: error.message || "An unknown error occurred"
+        });
+    }
+});
+
+// Get User Data API
+app.get('/user', async (req, res) => {
+    const { mobile, countryCode } = req.query;
+
+    // Input validation
+    if (!mobile || !countryCode) {
+        return res.status(400).json({ message: "Please provide both mobile and countryCode as query parameters." });
+    }
+
+    try {
+        // Find user by mobile number and country code
+        const user = await User.findOne({ mobile, countryCode });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Return user data in JSON format
+        return res.json({
+            message: "User retrieved successfully",
+            user: {
+                mobile: user.mobile,
+                countryCode: user.countryCode,
+                token: user.token,
+                deviceId: user.deviceId
             }
         });
     } catch (error) {
@@ -89,7 +120,7 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Login API');
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;  
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
