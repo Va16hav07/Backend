@@ -1,4 +1,4 @@
-// install  npm install express mongoose bcryptjs
+// install npm install express mongoose bcryptjs
 
 const mongoose = require('mongoose');
 const express = require('express');
@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
     match: /^[6-9]\d{9}$/, // Ensure mobile starts with 6-9 and is 10 digits
     unique: true 
   },
+  countryCode: { type: String, required: true }, // New field for country code
   password: { type: String, required: true },
   userType: { type: Number, enum: [0, 1], required: true } // 0 = Coach, 1 = Athlete
 });
@@ -41,10 +42,10 @@ const User = mongoose.model('User', userSchema);
 
 // Registration Endpoint
 app.post('/api/users', async (req, res) => {
-  const { firstName, lastName, email, dob, gender, mobile, password, confirmPassword, userType } = req.body;
+  const { firstName, lastName, email, dob, gender, mobile, countryCode, password, confirmPassword, userType } = req.body;
 
   // Validate required fields
-  if (!firstName || !lastName || !email || !dob || !gender || !mobile || !password || !confirmPassword || userType === undefined) {
+  if (!firstName || !lastName || !email || !dob || !gender || !mobile || !countryCode || !password || !confirmPassword || userType === undefined) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
@@ -75,6 +76,7 @@ app.post('/api/users', async (req, res) => {
       dob,
       gender,
       mobile,
+      countryCode, // Save the country code
       password: hashedPassword,
       userType, // Store the user type
     });
